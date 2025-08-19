@@ -29,7 +29,8 @@ services:
       - appnet
 
   postgres:
-    image: postgres:16-alpine
+    build:
+      context: ./docker/postgres
     container_name: laravel_postgres
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-app}
