@@ -9,7 +9,7 @@ Building a RAG (Retrieval-Augmented Generation) pipeline for recipe recommendati
 - **Vector Search**: OpenAI embeddings (text-embedding-3-small)
 - **Data Source**: TheMealDB API (free)
 - **Container**: Docker Compose setup
-- **Frontend**: Simple Blade templates (for MVP)
+- **Frontend**: Blade templates + AJAX (hybrid approach for MVP)
 
 ## 📊 Database Schema
 
@@ -67,6 +67,44 @@ recipe_ingredients (
 - **Cuisine-based**: "Italian recipes", "Japanese cuisine"
 - **Dish name**: "pasta carbonara", "teriyaki"
 
+## 🔍 Current Search Implementation (SQL-based)
+
+**Using PostgreSQL full-text search instead of vector embeddings**
+
+### SQL Search Features:
+1. **Ingredient Search**: Match by ingredient names using ILIKE
+2. **Recipe Name Search**: Fuzzy matching on recipe titles
+3. **Cuisine/Category Search**: Filter by area and category
+4. **Combined Search**: Multi-criteria search with ranking
+5. **Similarity Scoring**: Custom relevance scoring based on matches
+
+### Search Query Examples:
+```sql
+-- Ingredient-based search
+SELECT r.*, COUNT(ri.id) as ingredient_matches 
+FROM recipes r 
+JOIN recipe_ingredients ri ON r.id = ri.recipe_id 
+WHERE ri.ingredient ILIKE '%chicken%' OR ri.ingredient ILIKE '%rice%'
+GROUP BY r.id 
+ORDER BY ingredient_matches DESC;
+
+-- Name and cuisine search  
+SELECT * FROM recipes 
+WHERE name ILIKE '%pasta%' 
+   OR area ILIKE '%italian%' 
+   OR category ILIKE '%pasta%'
+ORDER BY 
+  CASE WHEN name ILIKE '%pasta%' THEN 3
+       WHEN area ILIKE '%italian%' THEN 2  
+       WHEN category ILIKE '%pasta%' THEN 1
+       ELSE 0 END DESC;
+```
+
+### Migration Path:
+- ✅ **Phase 1**: SQL text search (current)
+- ⏳ **Phase 2**: Elasticsearch for advanced text search
+- ⏳ **Phase 3**: Vector embeddings for semantic search
+
 ## 🏗 Project Structure
 
 ```
@@ -93,8 +131,14 @@ database/migrations/
 └── add_vector_extension.php
 
 routes/
-├── web.php                           # Web interface
-└── api.php                           # API endpoints
+├── web.php                           # Blade templates + AJAX
+└── api.php                           # JSON API endpoints
+
+resources/views/
+├── layouts/app.blade.php             # Main layout with CSS/JS
+├── search/index.blade.php            # Search interface
+├── recipes/show.blade.php            # Recipe details page
+└── partials/recipe-card.blade.php    # Recipe card component
 ```
 
 ## 🌐 TheMealDB API Integration
@@ -123,23 +167,23 @@ routes/
 
 ## 🎯 MVP Goals
 
-### Phase 1: Data Foundation
-- [ ] Setup pgvector extension
-- [ ] Create database migrations
-- [ ] Import 500+ recipes from TheMealDB
-- [ ] Generate embeddings for all chunks
+### Phase 1: Data Foundation ✅ COMPLETED
+- ✅ Setup pgvector extension
+- ✅ Create database migrations
+- ✅ Import 110+ recipes from TheMealDB
+- ✅ Recipe chunks and ingredients stored (SQL search ready)
 
-### Phase 2: RAG Implementation
-- [ ] Vector similarity search
-- [ ] Three search types (ingredients, cuisine, dish name)
-- [ ] API endpoints for search
-- [ ] Response ranking and filtering
+### Phase 2: RAG Implementation ✅ COMPLETED
+- ✅ SQL-based similarity search (cost-effective alternative)
+- ✅ Three search types (ingredients, cuisine, dish name)
+- ✅ API endpoints for search
+- ✅ Response ranking and filtering
 
-### Phase 3: User Interface
-- [ ] Simple chat interface
-- [ ] Recipe display with images
-- [ ] Search history and favorites
-- [ ] Mobile-responsive design
+### Phase 3: User Interface 🔄 IN PROGRESS
+- 🔄 Hybrid Blade + AJAX search interface
+- 🔄 Recipe cards with images and details
+- ⏳ Search history and favorites
+- ⏳ Mobile-responsive design
 
 ## 🔧 Development Commands
 
@@ -187,10 +231,27 @@ DB_PASSWORD=app
 ```
 
 ## 📝 Current Status
-- ✅ Laravel 12 setup with Docker
-- ✅ PostgreSQL configured
-- ⏳ Next: Setup pgvector and create migrations
-- ⏳ Then: Import recipes from TheMealDB API
+- ✅ **Phase 1 & 2 Complete**: Laravel 12 + PostgreSQL + SQL search
+- ✅ **110+ recipes** imported from TheMealDB API
+- ✅ **API endpoints** working: ingredients, cuisine, dish name, general search
+- ✅ **SQL-based search** with relevance scoring (cost-effective MVP)
+- 🔄 **Phase 3 In Progress**: Blade + AJAX user interface
+- ⏳ **Future upgrades**: Vector embeddings when budget allows
+
+## 🎨 Frontend Architecture (Phase 3)
+
+### Hybrid Approach: Blade + AJAX
+- **Blade templates**: Server-side rendering for SEO and initial load
+- **AJAX calls**: Dynamic search without page reloads
+- **Progressive enhancement**: Works without JavaScript
+- **Mobile-first**: Responsive design with CSS Grid/Flexbox
+
+### User Interface Features:
+1. **Search Interface**: Multi-tab search (ingredients, cuisine, dish name)
+2. **Real-time Results**: AJAX calls to existing API endpoints
+3. **Recipe Cards**: Thumbnail images from TheMealDB CDN
+4. **Recipe Details**: Full recipe view with ingredients and instructions
+5. **Responsive Design**: Works on mobile and desktop
 
 ## 💡 Tips for Development
 1. Start with small dataset (50-100 recipes) for testing
