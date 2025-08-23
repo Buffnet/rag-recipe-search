@@ -1,23 +1,11 @@
-# RAG Recipe Search System - Laravel 12 + FastAPI
+# Laravel Docker Starter
 
-**AI-Powered Recipe Discovery Platform** built with Laravel 12, PostgreSQL, and FastAPI proxy layer.
-
-This system uses **Retrieval-Augmented Generation (RAG)** patterns to provide intelligent recipe search based on ingredients, cuisine types, and cooking preferences. Currently uses SQL-based search with upgrade path to vector embeddings.
-
-## 🎯 Project Overview
-
-- **Backend**: Laravel 12 + PHP 8.3 with PostgreSQL 16 + pgvector
-- **Search Engine**: SQL-based text search (cost-effective MVP)
-- **Frontend**: Responsive Blade templates + AJAX
-- **API Layer**: Laravel JSON API + FastAPI async proxy
-- **Data Source**: 110+ recipes from TheMealDB API
-- **Container**: Docker Compose with all services
+A clean Docker-based Laravel 12 development environment with PostgreSQL, Redis, and all necessary services.
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 - Docker and Docker Compose v2
-- Python 3.11+ (for FastAPI proxy)
 
 ### 1. Start the Laravel Application
 ```bash
@@ -25,56 +13,30 @@ make up
 make init   # Creates Laravel 12 project in ./src and configures environment
 ```
 
-### 2. Import Recipe Data
+### 2. Run Database Migrations
 ```bash
 make artisan ARGS="migrate"
-make artisan ARGS="recipes:import --limit=100"
 ```
 
-### 3. Access the Applications
-- **Recipe Search Web UI**: http://localhost:8080
+### 3. Access the Application
+- **Web Application**: http://localhost:8080
 - **Laravel API**: http://localhost:8080/api
-- **FastAPI Proxy**: http://localhost:8001 (see fastapi-proxy/README.md)
-- **API Documentation**: http://localhost:8001/docs
-
-## 🔍 Search Capabilities
-
-### Web Interface Features:
-- 🥕 **Ingredient Search**: "chicken, rice, tomatoes"
-- 🌍 **Cuisine Search**: "Italian", "Japanese", "Mexican"
-- 🍽️ **Dish Name Search**: "pasta", "curry", "salad"
-- 🔍 **General Search**: "spicy chicken with vegetables"
-
-### API Endpoints:
-```bash
-# Search by ingredients
-curl -X POST http://localhost:8080/api/search/ingredients \
-  -H "Content-Type: application/json" \
-  -d '{"ingredients": "chicken, rice"}'
-
-# Search by cuisine
-curl -X POST http://localhost:8080/api/search/cuisine \
-  -H "Content-Type: application/json" \
-  -d '{"cuisine": "Italian"}'
-
-# Get search statistics
-curl http://localhost:8080/api/search/stats
-```
+- **Mailpit (Email testing)**: http://localhost:8025
 
 ## 📊 Services
 
 - **nginx**: `:8080` - Web server and Laravel app
 - **php-fpm (app)**: PHP 8.3 with Composer and Laravel
-- **postgres**: `:54322` (internal `postgres:5432`) - Database with pgvector
-- **redis**: `:63790` - Caching and sessions
+- **postgres**: `:54322` (internal `postgres:5432`) - Database
+- **redis**: `:63790` - Caching and sessions  
 - **mailpit**: `:8025` - Email testing sandbox
 - **node**: Node 20 for frontend builds
-- **FastAPI Proxy**: `:8001` - High-performance async API layer
 
 ## 🛠 Makefile Commands
 
 ### Laravel Development:
 - `make up` - Start all containers in background
+- `make up-work` - Start containers with logs visible
 - `make down` - Stop and remove containers
 - `make logs` - View container logs
 - `make init` - Create Laravel 12 project and configure environment
@@ -83,15 +45,14 @@ curl http://localhost:8080/api/search/stats
 - `make tinker` - Laravel Tinker REPL
 - `make test` - Run PHPUnit tests
 
-### Recipe Data Management:
-- `make artisan ARGS="migrate"` - Run database migrations
-- `make artisan ARGS="recipes:import --limit=100"` - Import recipes from TheMealDB
-- `make artisan ARGS="recipes:import --limit=500"` - Import more recipes
-
 ### Frontend Development:
 - `make npm-install` - Install Node.js dependencies
 - `make npm-dev` - Start development build with watch
 - `make npm-build` - Production build
+
+### Debugging:
+- `make xdebug-on` - Enable Xdebug
+- `make xdebug-off` - Disable Xdebug
 
 ## 🎨 Architecture
 
@@ -99,19 +60,10 @@ curl http://localhost:8080/api/search/stats
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
 │   Web Browser   │───▶│   Laravel App   │───▶│  PostgreSQL DB  │
 │                 │    │                 │    │                 │
-│ - Recipe Search │    │ - Blade Views   │    │ - 110+ Recipes  │
-│ - AJAX Calls    │    │ - API Routes    │    │ - Ingredients   │
-│ - Responsive    │    │ - SQL Search    │    │ - Text Chunks   │
+│ - Blade Views   │    │ - MVC Pattern   │    │ - Migrations    │
+│ - API Calls     │    │ - API Routes    │    │ - Models        │
+│ - Responsive    │    │ - Controllers   │    │ - Eloquent ORM  │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
-                                │
-                                ▼
-                       ┌─────────────────┐
-                       │  FastAPI Proxy  │
-                       │                 │
-                       │ - Async Client  │
-                       │ - Redis Cache   │
-                       │ - Parallel Ops  │
-                       └─────────────────┘
 ```
 
 ## 📁 Project Structure
@@ -119,16 +71,17 @@ curl http://localhost:8080/api/search/stats
 ```
 ├── src/                          # Laravel 12 application
 │   ├── app/
-│   │   ├── Models/              # Recipe, RecipeChunk, RecipeIngredient
-│   │   ├── Services/            # TheMealDB, RecipeSearch, SqlRecipeSearch
-│   │   ├── Http/Controllers/    # Web and API controllers
-│   │   └── Console/Commands/    # Recipe import command
+│   │   ├── Models/              # Eloquent models
+│   │   ├── Http/Controllers/    # Controllers
+│   │   └── Console/Commands/    # Artisan commands
 │   ├── resources/views/         # Blade templates
 │   ├── routes/                  # Web and API routes
 │   └── database/migrations/     # Database schema
-├── fastapi-proxy/               # FastAPI async proxy layer
 ├── docker/                      # Docker configuration
-└── claude.md                    # Detailed project documentation
+│   ├── nginx/                   # Nginx configuration
+│   ├── php/                     # PHP-FPM configuration
+│   └── postgres/                # PostgreSQL configuration
+└── Makefile                     # Development commands
 ```
 
 ## 🔧 Environment Configuration
@@ -151,54 +104,38 @@ DB_USERNAME=app
 DB_PASSWORD=app
 ```
 
-## 📈 Performance Features
-
-| Feature | Description | Status |
-|---------|-------------|--------|
-| SQL Search | Fast text-based search with relevance scoring | ✅ Active |
-| Recipe Caching | Database-level query optimization | ✅ Active |
-| AJAX Interface | No page reloads for search | ✅ Active |
-| FastAPI Proxy | Async request handling with Redis cache | ✅ Optional |
-| Vector Embeddings | Semantic search with OpenAI | ⏳ Future upgrade |
-
 ## 🧪 Development Workflow
 
-### Adding New Recipes:
+### Creating New Features:
 ```bash
-# Import specific number of recipes
-make artisan ARGS="recipes:import --limit=50"
+# Generate controller
+make artisan ARGS="make:controller YourController"
 
-# Check import status
-make artisan ARGS="recipes:import --status"
+# Generate model with migration
+make artisan ARGS="make:model YourModel -m"
+
+# Run migrations
+make artisan ARGS="migrate"
 ```
 
 ### API Development:
 ```bash
-# Test search endpoints
-curl -X POST http://localhost:8080/api/search/ingredients \
-  -H "Content-Type: application/json" \
-  -d '{"ingredients": "beef, potatoes"}'
+# Test API endpoints
+curl http://localhost:8080/api/your-endpoint
 ```
 
 ### Frontend Development:
 1. Edit Blade templates in `src/resources/views/`
-2. Modify CSS/JS in template files
-3. Test responsive design on http://localhost:8080
+2. Use Vite for asset compilation: `make npm-dev`
+3. Access your app at http://localhost:8080
 
 ## 🚀 Deployment Notes
 
 - **Production**: Use environment-specific `.env` files
-- **Scaling**: FastAPI proxy supports high concurrent loads
-- **Monitoring**: Built-in health checks and statistics endpoints
-- **Upgrades**: Architecture supports vector embeddings when budget allows
-
-## 📚 Additional Resources
-
-- **Detailed Documentation**: See `claude.md` for complete technical details
-- **API Documentation**: http://localhost:8001/docs (when FastAPI is running)
-- **Database Schema**: Check `src/database/migrations/` for table structures
-- **TheMealDB API**: External recipe data source documentation
+- **Security**: Update default database credentials
+- **Performance**: Configure opcache and other PHP optimizations
+- **Monitoring**: Add logging and monitoring as needed
 
 ---
 
-**Happy cooking and coding!** 🍳👨‍💻
+**Happy coding!** 🚀
